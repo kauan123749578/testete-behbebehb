@@ -1,0 +1,20 @@
+{
+  "sales": [
+    {
+      "id": "51acded9-d988-4731-9a71-2bcad3f16bb2",
+      "callId": "faaaf2bd-142e-42a4-ad17-a32bf4ca33a0",
+      "amount": 297.9,
+      "note": "Venda registrada na criação do link",
+      "at": "2025-12-27T04:24:28.796Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "f244f824-fe6a-4047-b3ef-a18b60368051",
+      "callId": "200f759b-a33b-4aa5-8f4c-ce74e1695101",
+      "amount": 77.7,
+      "note": "Venda registrada na criação do link",
+      "at": "2025-12-27T05:02:00.420Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    }
+  ]
+}

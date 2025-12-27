@@ -1,0 +1,262 @@
+{
+  "events": [
+    {
+      "id": "3525efba-141f-4ec4-8818-36b2f2af5fd9",
+      "type": "call_created",
+      "callId": "faaaf2bd-142e-42a4-ad17-a32bf4ca33a0",
+      "at": "2025-12-27T04:24:28.793Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "5d33fa61-fc0b-466f-a305-527a9b043cde",
+      "type": "sale_marked",
+      "callId": "faaaf2bd-142e-42a4-ad17-a32bf4ca33a0",
+      "at": "2025-12-27T04:24:28.796Z",
+      "amount": 297.9,
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "37562581-8e3f-4ae8-b086-1a3e338efc43",
+      "type": "ring_open",
+      "callId": "faaaf2bd-142e-42a4-ad17-a32bf4ca33a0",
+      "at": "2025-12-27T04:24:56.440Z"
+    },
+    {
+      "id": "98183e31-333e-40b0-bd9f-54fac9fa2633",
+      "type": "call_answer",
+      "callId": "faaaf2bd-142e-42a4-ad17-a32bf4ca33a0",
+      "at": "2025-12-27T04:25:02.034Z"
+    },
+    {
+      "id": "fed534c6-fbac-44f0-89ad-79554a32a4f8",
+      "type": "ring_open",
+      "callId": "faaaf2bd-142e-42a4-ad17-a32bf4ca33a0",
+      "at": "2025-12-27T04:25:02.169Z"
+    },
+    {
+      "id": "ea7830ee-c5f8-4e7e-9f67-41b4f927bfae",
+      "type": "call_created",
+      "callId": "e644f2c5-2e6a-4f0a-8f3b-52012c228e46",
+      "at": "2025-12-27T04:28:03.962Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "646ff74e-3e17-4f1a-9075-9381a997272a",
+      "type": "ring_open",
+      "callId": "e644f2c5-2e6a-4f0a-8f3b-52012c228e46",
+      "at": "2025-12-27T04:28:18.687Z"
+    },
+    {
+      "id": "93097f02-fdaa-445b-8d63-16324f836e65",
+      "type": "call_answer",
+      "callId": "e644f2c5-2e6a-4f0a-8f3b-52012c228e46",
+      "at": "2025-12-27T04:28:27.601Z"
+    },
+    {
+      "id": "48a65816-7e7e-4537-8ead-c433b9ba4b46",
+      "type": "ring_open",
+      "callId": "e644f2c5-2e6a-4f0a-8f3b-52012c228e46",
+      "at": "2025-12-27T04:28:27.730Z"
+    },
+    {
+      "id": "b4aec727-a66f-4756-96a6-f45912fdbae7",
+      "type": "call_created",
+      "callId": "5275c3f8-ee80-4b2c-8517-72939eed932f",
+      "at": "2025-12-27T04:32:30.305Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "da50551c-5ec7-4fe9-a019-a0cae1ecd334",
+      "type": "ring_open",
+      "callId": "5275c3f8-ee80-4b2c-8517-72939eed932f",
+      "at": "2025-12-27T04:32:42.075Z"
+    },
+    {
+      "id": "960a1a53-e1a2-4ef7-8429-bdb8c7ef0038",
+      "type": "ring_open",
+      "callId": "5275c3f8-ee80-4b2c-8517-72939eed932f",
+      "at": "2025-12-27T04:32:47.207Z"
+    },
+    {
+      "id": "fb907735-9c36-4bc1-b411-01a79833d399",
+      "type": "call_created",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:40:07.943Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "9252b5bf-5519-4c18-9efa-8172db487039",
+      "type": "ring_open",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:40:22.292Z"
+    },
+    {
+      "id": "a119582d-647a-4122-bca3-e77913838019",
+      "type": "call_answer",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:40:29.597Z"
+    },
+    {
+      "id": "61e90bbe-f62e-4fca-854b-610898784dd2",
+      "type": "ring_open",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:40:29.722Z"
+    },
+    {
+      "id": "8be18845-9beb-4c9b-9313-2f3d64045e25",
+      "type": "ring_open",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:42:21.502Z"
+    },
+    {
+      "id": "6af845e0-bde3-4fe8-8b1e-6136f1883d48",
+      "type": "ring_open",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:45:58.589Z"
+    },
+    {
+      "id": "fef0ea5f-cb9f-42df-ba6a-a50a54f5bd27",
+      "type": "ring_open",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:46:03.816Z"
+    },
+    {
+      "id": "b52db86e-760c-45a1-869c-2581175918fb",
+      "type": "ring_open",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:50:40.063Z"
+    },
+    {
+      "id": "eb839885-22da-4e2e-9fc6-22bf7077512a",
+      "type": "ring_open",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:53:32.582Z"
+    },
+    {
+      "id": "c9a0fe8a-5416-40e0-ba09-adcf0a8c953a",
+      "type": "call_answer",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:53:39.109Z"
+    },
+    {
+      "id": "f58fba38-fbff-43f4-a4b1-2d87cf911d0e",
+      "type": "ring_open",
+      "callId": "bccb7cb7-b1c0-45c1-b3f6-88de11399f39",
+      "at": "2025-12-27T04:53:39.292Z"
+    },
+    {
+      "id": "e006795f-b65b-486a-bd7f-e0cfeb5fbaf9",
+      "type": "call_created",
+      "callId": "94cf1bcd-0f83-455d-a240-ff779fdcb443",
+      "at": "2025-12-27T04:55:09.408Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "ef004ab2-d77d-447b-b6f7-2f1e11124d10",
+      "type": "ring_open",
+      "callId": "94cf1bcd-0f83-455d-a240-ff779fdcb443",
+      "at": "2025-12-27T04:55:25.479Z"
+    },
+    {
+      "id": "9722f3db-a4fe-4a4d-bec3-844c6efd2734",
+      "type": "call_answer",
+      "callId": "94cf1bcd-0f83-455d-a240-ff779fdcb443",
+      "at": "2025-12-27T04:55:32.300Z"
+    },
+    {
+      "id": "3c2a35dd-ccb3-4381-a066-be1766e7debe",
+      "type": "ring_open",
+      "callId": "94cf1bcd-0f83-455d-a240-ff779fdcb443",
+      "at": "2025-12-27T04:55:32.417Z"
+    },
+    {
+      "id": "b84d0446-67f8-4b12-8388-d7f49b6c21ec",
+      "type": "call_created",
+      "callId": "200f759b-a33b-4aa5-8f4c-ce74e1695101",
+      "at": "2025-12-27T05:02:00.416Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "6a775a8b-2b5d-47ab-b3ac-8d84c91297f5",
+      "type": "sale_marked",
+      "callId": "200f759b-a33b-4aa5-8f4c-ce74e1695101",
+      "at": "2025-12-27T05:02:00.420Z",
+      "amount": 77.7,
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "c9ba6e08-441f-4451-8c30-5063260087c2",
+      "type": "ring_open",
+      "callId": "200f759b-a33b-4aa5-8f4c-ce74e1695101",
+      "at": "2025-12-27T05:02:17.197Z"
+    },
+    {
+      "id": "8f21990a-0d90-4cac-8c87-6aa5a92f3869",
+      "type": "call_answer",
+      "callId": "200f759b-a33b-4aa5-8f4c-ce74e1695101",
+      "at": "2025-12-27T05:02:27.498Z"
+    },
+    {
+      "id": "2c78d552-9617-465d-a6d1-e825f387344d",
+      "type": "ring_open",
+      "callId": "200f759b-a33b-4aa5-8f4c-ce74e1695101",
+      "at": "2025-12-27T05:02:27.732Z"
+    },
+    {
+      "id": "bbf3d812-2342-47b8-a296-ec4305d71d19",
+      "type": "call_created",
+      "callId": "45f1aae3-0257-40d6-af85-85c2e5db9eac",
+      "at": "2025-12-27T05:02:50.737Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "ba102f07-710c-4fde-b461-75b325f087bf",
+      "type": "ring_open",
+      "callId": "45f1aae3-0257-40d6-af85-85c2e5db9eac",
+      "at": "2025-12-27T05:03:01.425Z"
+    },
+    {
+      "id": "9c17f64f-859b-44c9-8967-806ac751b8db",
+      "type": "ring_open",
+      "callId": "45f1aae3-0257-40d6-af85-85c2e5db9eac",
+      "at": "2025-12-27T05:03:05.877Z"
+    },
+    {
+      "id": "76e5caef-100a-484b-9c70-8b170edae675",
+      "type": "call_created",
+      "callId": "f159e76f-0e14-40a5-8e23-8da38831eb7a",
+      "at": "2025-12-27T05:05:46.324Z",
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3"
+    },
+    {
+      "id": "67eb6fcb-d87d-4efc-8a4e-0b2b0b8f75d5",
+      "type": "ring_open",
+      "callId": "f159e76f-0e14-40a5-8e23-8da38831eb7a",
+      "at": "2025-12-27T05:06:01.702Z"
+    },
+    {
+      "id": "3ee0befb-2bbb-4581-ba22-97e64c8331ea",
+      "type": "ring_open",
+      "callId": "f159e76f-0e14-40a5-8e23-8da38831eb7a",
+      "at": "2025-12-27T05:07:23.471Z"
+    },
+    {
+      "id": "384f0271-aabf-4499-81b3-bf02d29561cd",
+      "type": "ring_open",
+      "callId": "f159e76f-0e14-40a5-8e23-8da38831eb7a",
+      "at": "2025-12-27T05:09:30.842Z"
+    },
+    {
+      "id": "70fcefe5-e599-4eb6-9e31-62b0e0fab690",
+      "type": "call_answer",
+      "callId": "f159e76f-0e14-40a5-8e23-8da38831eb7a",
+      "at": "2025-12-27T05:10:24.787Z"
+    },
+    {
+      "id": "2abb32e3-c84a-4e0d-bd78-3a42bb279af3",
+      "type": "ring_open",
+      "callId": "f159e76f-0e14-40a5-8e23-8da38831eb7a",
+      "at": "2025-12-27T05:10:25.008Z"
+    }
+  ]
+}

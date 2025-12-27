@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host - CallSimulador</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status.connected {
+            background: #2d5016;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: #2a2a2a;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        .panel h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .guests-list {
+            margin-top: 20px;
+        }
+
+        .guest-item {
+            padding: 10px;
+            background: #333;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Painel Host - CallSimulador</h1>
+        
+        <div class="status" id="status">
+            Conectando...
+        </div>
+
+        <div class="controls">
+            <div class="panel">
+                <h2>Controles de Áudio</h2>
+                
+                <div class="control-group">
+                    <label>Microfone</label>
+                    <button id="micBtn">Ativar Microfone</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Conectados</h2>
+                <div class="guests-list" id="guestsList">
+                    <p style="color: #888;">Nenhum cliente conectado ainda...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/host.js"></script>
+</body>
+</html>

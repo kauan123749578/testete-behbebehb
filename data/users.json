@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "userId": "55d90fb1-7927-403a-b8c0-8c22c68b14f3",
+      "email": "kauan@gmail.com",
+      "passwordHash": "$2a$10$jQJgEaq2wgcgK1aRIfFj6.4QT5KQc27CMyPWWYYTYxfn77YA5yKbm",
+      "createdAt": "2025-12-27T04:14:07.273Z"
+    },
+    {
+      "userId": "fda04e49-3b5b-4af4-be82-0e8bb30ee2eb",
+      "email": "admin",
+      "passwordHash": "$2a$10$QZIbZ8E5oghNti9WbKveBeEvh8cM5Ru4nCY0507TwRAvQAhxcGAIy",
+      "createdAt": "2025-12-27T04:16:21.260Z"
+    }
+  ]
+}

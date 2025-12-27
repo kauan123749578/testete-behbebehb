@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --background: 0 0% 3%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 6%;
+  --card-foreground: 0 0% 98%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 65%;
+  --primary: 0 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --border: 0 0% 15%;
+  --radius: 8px;
+}
+
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.font-brand {
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+  font-weight: 900;
+}
+
+body {
+  background: #000000;
+  color: hsl(var(--foreground));
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d61f1f;
+}
