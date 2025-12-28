@@ -40,6 +40,7 @@ function ensureDataDir() {
 function readJson(filePath, fallback) {
   try {
     ensureDataDir();
+    if (!fs.existsSync(filePath)) return fallback;
     const raw = fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(raw);
   } catch {
@@ -168,7 +169,7 @@ function isExpired(call) {
   return Number.isNaN(t) ? false : Date.now() > t;
 }
 
-// Uploads
+// Configuração Uploads
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 const avatarsDir = path.join(uploadsDir, 'avatars');
@@ -200,29 +201,11 @@ const uploadAvatar = multer({
   }
 });
 
-// Middleware
+// Middleware Global
 app.use(cors());
 app.use(express.json({ limit: '1000mb' }));
 app.use(express.urlencoded({ limit: '1000mb', extended: true }));
 app.use(cookieParser());
-
-// --- ROTAS PRIORITÁRIAS ---
-app.get('/video/:callId', (req, res) => {
-  const p = path.join(__dirname, 'public', 'video.html');
-  if (fs.existsSync(p)) res.sendFile(p);
-  else res.status(404).send('Página de vídeo não encontrada no servidor');
-});
-
-app.get('/call/:callId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'call.html'));
-});
-
-app.get('/host/:callId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'host.html'));
-});
-
-app.use(express.static('public', { index: false }));
-app.use('/uploads', express.static('public/uploads'));
 
 // Auth helpers
 const SESSION_COOKIE = 'cs_session';
@@ -230,7 +213,7 @@ const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function getSession(sessionId) {
   const store = readJson(sessionsFile, { sessions: [] });
-  const s = (store.sessions || []).find((x) => x.sessionId === sessionId);
+  const s = (store.sessions || []).find((x) => x && x.sessionId === sessionId);
   if (!s) return null;
   if (Date.now() - new Date(s.createdAt).getTime() > SESSION_MAX_AGE_MS) return null;
   return s;
@@ -253,16 +236,18 @@ function setSession(res, userId) {
   res.cookie(SESSION_COOKIE, sessionId, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: SESSION_MAX_AGE_MS });
 }
 
-// API Auth
+// --- API AUTH ---
 app.post('/api/auth/register', (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'usuário e senha obrigatórios' });
+  
   const store = readJson(usersFile, { users: [] });
-  if (store.users.some(u => (u.username || u.email || '').toLowerCase() === username.toLowerCase())) {
-    return res.status(409).json({ error: 'Usuário já existe' });
-  }
+  const exists = (store.users || []).some(u => u && (u.username || u.email || '').toLowerCase() === String(username).toLowerCase());
+  
+  if (exists) return res.status(409).json({ error: 'Usuário já existe' });
+  
   const userId = uuidv4();
-  store.users.push({ userId, username, passwordHash: bcrypt.hashSync(password, 10), createdAt: new Date().toISOString() });
+  store.users.push({ userId, username, passwordHash: bcrypt.hashSync(String(password), 10), createdAt: new Date().toISOString() });
   writeJson(usersFile, store);
   setSession(res, userId);
   res.json({ ok: true, userId, username });
@@ -271,9 +256,14 @@ app.post('/api/auth/register', (req, res) => {
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'usuário e senha obrigatórios' });
+  
   const store = readJson(usersFile, { users: [] });
-  const user = store.users.find(u => (u.username || u.email || '').toLowerCase() === username.toLowerCase());
-  if (!user || !bcrypt.compareSync(password, user.passwordHash)) return res.status(401).json({ error: 'Credenciais inválidas' });
+  const user = (store.users || []).find(u => u && (u.username || u.email || '').toLowerCase() === String(username).toLowerCase());
+  
+  if (!user || !bcrypt.compareSync(String(password), user.passwordHash)) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
+  
   setSession(res, user.userId);
   res.json({ ok: true, userId: user.userId, username: user.username || user.email });
 });
@@ -283,17 +273,30 @@ app.get('/api/auth/me', (req, res) => {
   const s = sid ? getSession(sid) : null;
   if (!s) return res.status(401).json({ error: 'Não autenticado' });
   const store = readJson(usersFile, { users: [] });
-  const user = store.users.find(u => u.userId === s.userId);
+  const user = (store.users || []).find(u => u && u.userId === s.userId);
   if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
   res.json({ ok: true, userId: user.userId, username: user.username || user.email });
 });
 
-// API Calls
+// --- API UPLOADS ---
+app.post('/api/upload-video', requireAuth, upload.single('video'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+  res.json({ videoUrl: `/uploads/${req.file.filename}`, filename: req.file.filename });
+});
+
+app.post('/api/upload-avatar', requireAuth, uploadAvatar.single('avatar'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+  res.json({ avatarUrl: `/uploads/avatars/${req.file.filename}`, filename: req.file.filename });
+});
+
+// --- API CALLS ---
 app.post('/api/create-call', requireAuth, (req, res) => {
   const { videoUrl, callerName, callerAvatarUrl, title, expectedAmount } = req.body;
   if (!videoUrl) return res.status(400).json({ error: 'videoUrl é obrigatório' });
+  
   const callId = uuidv4();
   const amt = parseCurrencyToNumber(expectedAmount);
+  
   calls.set(callId, {
     title: title || null,
     videoUrl,
@@ -306,9 +309,11 @@ app.post('/api/create-call', requireAuth, (req, res) => {
     guests: new Set(),
     createdAt: new Date()
   });
+  
   persistCalls();
   appendEvent({ id: uuidv4(), type: 'call_created', callId, at: new Date().toISOString(), userId: req.userId });
   if (amt) addSale({ callId, amount: amt, note: 'Venda registrada na criação', userId: req.userId });
+  
   res.json({ callId, ringUrl: `/ring/${callId}` });
 });
 
@@ -331,7 +336,25 @@ app.get('/api/call/:callId', (req, res) => {
   });
 });
 
-// API History/Sales
+app.patch('/api/call/:callId', requireAuth, (req, res) => {
+  const call = calls.get(req.params.callId);
+  if (!call) return res.status(404).json({ error: 'Não encontrada' });
+  if (call.ownerUserId !== req.userId) return res.status(403).json({ error: 'Sem permissão' });
+  if (req.body.expireNow) call.expiresAt = new Date(Date.now() - 1000);
+  persistCalls();
+  res.json({ ok: true });
+});
+
+app.delete('/api/call/:callId', requireAuth, (req, res) => {
+  const call = calls.get(req.params.callId);
+  if (!call) return res.status(404).json({ error: 'Não encontrada' });
+  if (call.ownerUserId !== req.userId) return res.status(403).json({ error: 'Sem permissão' });
+  calls.delete(req.params.callId);
+  persistCalls();
+  res.json({ ok: true });
+});
+
+// --- API HISTORY & SALES ---
 app.get('/api/history', requireAuth, (req, res) => {
   const events = listEvents(8000).filter(e => {
     const c = calls.get(e.callId);
@@ -348,6 +371,14 @@ app.get('/api/sales', requireAuth, (req, res) => {
   res.json({ sales });
 });
 
+app.post('/api/sales', requireAuth, (req, res) => {
+  const { callId, amount } = req.body;
+  const amt = parseCurrencyToNumber(amount);
+  if (!amt) return res.status(400).json({ error: 'Valor inválido' });
+  addSale({ callId, amount: amt, userId: req.userId });
+  res.json({ ok: true });
+});
+
 app.post('/api/track', (req, res) => {
   const { callId, type } = req.body;
   if (!calls.has(callId)) return res.status(400).json({ error: 'Inválido' });
@@ -355,7 +386,25 @@ app.post('/api/track', (req, res) => {
   res.json({ ok: true });
 });
 
-// Next.js Integration
+// --- ROTAS DE PÁGINAS EXPRESS ---
+app.get('/video/:callId', (req, res) => {
+  const p = path.join(__dirname, 'public', 'video.html');
+  if (fs.existsSync(p)) res.sendFile(p);
+  else res.status(404).send('Página de vídeo não encontrada no servidor');
+});
+
+app.get('/call/:callId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'call.html'));
+});
+
+app.get('/host/:callId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'host.html'));
+});
+
+app.use(express.static('public', { index: false }));
+app.use('/uploads', express.static('public/uploads'));
+
+// --- NEXT.JS INTEGRATION ---
 const dev = process.env.NODE_ENV !== 'production';
 const nextApp = next({ dev, dir: __dirname });
 const nextHandler = nextApp.getRequestHandler();
