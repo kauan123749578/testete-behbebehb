@@ -14,13 +14,13 @@ const crypto = require('crypto');
 const app = express();
 const server = http.createServer(app);
 
-// WebSocket Server para signaling (isola em /ws para não conflitar com WebSocket do Next)
+// WebSocket Server para signaling
 const wss = new WebSocket.Server({ server, path: '/ws' });
 
-// Armazena as salas de call (em produção, use Redis ou DB)
-const calls = new Map(); // callId -> { videoUrl, hostId, guests: Set }
+// Armazena as salas de call
+const calls = new Map();
 
-// Persistência simples em arquivo (para não perder calls ao reiniciar)
+// Persistência simples em arquivo
 const dataDir = path.join(__dirname, 'data');
 const callsFile = path.join(dataDir, 'calls.json');
 const usersFile = path.join(dataDir, 'users.json');
@@ -78,41 +78,24 @@ function parseCurrencyToNumber(input) {
   if (input === null || input === undefined) return null;
   if (typeof input === 'number') return Number.isFinite(input) ? input : null;
   if (typeof input !== 'string') return null;
-  // aceita "R$50,90", "50.90", "50,90", "1.234,56", "1,234.56"
   const raw = input.replace(/\s/g, '').replace(/^R\$/i, '');
   const hasComma = raw.includes(',');
   const hasDot = raw.includes('.');
-
   let normalized = raw;
   if (hasComma && hasDot) {
-    // decide qual é decimal pelo último separador
     const lastComma = raw.lastIndexOf(',');
     const lastDot = raw.lastIndexOf('.');
-    if (lastComma > lastDot) {
-      // decimal = ','  -> remove '.' milhares
-      normalized = raw.replace(/\./g, '').replace(',', '.');
-    } else {
-      // decimal = '.'  -> remove ',' milhares
-      normalized = raw.replace(/,/g, '');
-    }
-  } else if (hasComma) {
-    // decimal = ',' (pt-BR)
-    normalized = raw.replace(/\./g, '').replace(',', '.');
-  } else if (hasDot) {
-    // se tiver exatamente 2 casas após o último '.', tratar como decimal
+    if (lastComma > lastDot) normalized = raw.replace(/\./g, '').replace(',', '.');
+    else normalized = raw.replace(/,/g, '');
+  } else if (hasComma) normalized = raw.replace(/\./g, '').replace(',', '.');
+  else if (hasDot) {
     const lastDot = raw.lastIndexOf('.');
     const decimals = raw.length - lastDot - 1;
-    if (decimals === 2) {
-      normalized = raw.replace(/,/g, '');
-    } else {
-      // provável milhares
-      normalized = raw.replace(/\./g, '');
-    }
+    if (decimals === 2) normalized = raw.replace(/,/g, '');
+    else normalized = raw.replace(/\./g, '');
   }
-
   const n = Number(normalized);
-  if (!Number.isFinite(n)) return null;
-  return n;
+  return Number.isFinite(n) ? n : null;
 }
 
 function addSale({ callId, amount, note, userId }) {
@@ -181,59 +164,38 @@ function loadCallsFromDisk() {
 function isExpired(call) {
   if (!call?.expiresAt) return false;
   const t = new Date(call.expiresAt).getTime();
-  if (Number.isNaN(t)) return false;
-  return Date.now() > t;
+  return Number.isNaN(t) ? false : Date.now() > t;
 }
 
-// Cria pasta de uploads se não existir
+// Uploads
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Pasta para avatares
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 const avatarsDir = path.join(uploadsDir, 'avatars');
-if (!fs.existsSync(avatarsDir)) {
-  fs.mkdirSync(avatarsDir, { recursive: true });
-}
+if (!fs.existsSync(avatarsDir)) fs.mkdirSync(avatarsDir, { recursive: true });
 
-// Configuração do Multer para upload de vídeos
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}-${file.originalname}`;
-    cb(null, uniqueName);
-  }
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => cb(null, `${uuidv4()}-${file.originalname}`)
 });
 
 const upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 1024 * 1024 * 1024 // Aumentado para 1GB (era 500MB)
-  },
+  limits: { fileSize: 1024 * 1024 * 1024 }, // 1GB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('video/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Apenas arquivos de vídeo são permitidos'));
-    }
+    if (file.mimetype.startsWith('video/')) cb(null, true);
+    else cb(new Error('Apenas vídeos são permitidos'));
   }
 });
 
-// Upload de avatar (imagem)
-const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, avatarsDir),
-  filename: (req, file, cb) => cb(null, `${uuidv4()}-${file.originalname}`)
-});
-
 const uploadAvatar = multer({
-  storage: avatarStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, avatarsDir),
+    filename: (req, file, cb) => cb(null, `${uuidv4()}-${file.originalname}`)
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Apenas arquivos de imagem são permitidos'));
+    else cb(new Error('Apenas imagens são permitidas'));
   }
 });
 
@@ -242,29 +204,25 @@ app.use(cors());
 app.use(express.json({ limit: '1000mb' }));
 app.use(express.urlencoded({ limit: '1000mb', extended: true }));
 app.use(cookieParser());
-// IMPORTANTE: index:false para o Next.js poder responder "/" (senão cai no public/index.html)
 app.use(express.static('public', { index: false }));
 app.use('/uploads', express.static('public/uploads'));
 
-// Auth helpers (session cookie)
+// Auth helpers
 const SESSION_COOKIE = 'cs_session';
-const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function getSession(sessionId) {
   const store = readJson(sessionsFile, { sessions: [] });
   const s = (store.sessions || []).find((x) => x.sessionId === sessionId);
   if (!s) return null;
-  const created = new Date(s.createdAt).getTime();
-  if (Number.isNaN(created)) return null;
-  if (Date.now() - created > SESSION_MAX_AGE_MS) return null;
+  if (Date.now() - new Date(s.createdAt).getTime() > SESSION_MAX_AGE_MS) return null;
   return s;
 }
 
 function requireAuth(req, res, nextFn) {
   const sid = req.cookies?.[SESSION_COOKIE];
-  if (!sid) return res.status(401).json({ error: 'Não autenticado' });
-  const s = getSession(sid);
-  if (!s) return res.status(401).json({ error: 'Sessão inválida' });
+  const s = sid ? getSession(sid) : null;
+  if (!s) return res.status(401).json({ error: 'Não autenticado' });
   req.userId = s.userId;
   nextFn();
 }
@@ -275,38 +233,17 @@ function setSession(res, userId) {
   store.sessions = Array.isArray(store.sessions) ? store.sessions : [];
   store.sessions.push({ sessionId, userId, createdAt: new Date().toISOString() });
   writeJson(sessionsFile, store);
-  res.cookie(SESSION_COOKIE, sessionId, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: false,
-    maxAge: SESSION_MAX_AGE_MS
-  });
+  res.cookie(SESSION_COOKIE, sessionId, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: SESSION_MAX_AGE_MS });
 }
 
-function clearSession(req, res) {
-  const sid = req.cookies?.[SESSION_COOKIE];
-  if (sid) {
-    const store = readJson(sessionsFile, { sessions: [] });
-    store.sessions = (store.sessions || []).filter((x) => x.sessionId !== sid);
-    writeJson(sessionsFile, store);
-  }
-  res.clearCookie(SESSION_COOKIE);
-}
-
-// Auth endpoints
+// API Auth
 app.post('/api/auth/register', (req, res) => {
   const { username, password } = req.body || {};
-  if (!username || typeof username !== 'string') return res.status(400).json({ error: 'usuário é obrigatório' });
-  if (!password || typeof password !== 'string' || password.length < 3) {
-    return res.status(400).json({ error: 'password deve ter pelo menos 3 caracteres' });
-  }
+  if (!username || !password) return res.status(400).json({ error: 'usuário e senha obrigatórios' });
   const store = readJson(usersFile, { users: [] });
-  store.users = Array.isArray(store.users) ? store.users : [];
-  const exists = store.users.some((u) => (u.username || '').toLowerCase() === username.toLowerCase());
-  if (exists) return res.status(409).json({ error: 'Usuário já cadastrado' });
+  if (store.users.some(u => u.username.toLowerCase() === username.toLowerCase())) return res.status(409).json({ error: 'Usuário já existe' });
   const userId = uuidv4();
-  const passwordHash = bcrypt.hashSync(password, 10);
-  store.users.push({ userId, username, passwordHash, createdAt: new Date().toISOString() });
+  store.users.push({ userId, username, passwordHash: bcrypt.hashSync(password, 10), createdAt: new Date().toISOString() });
   writeJson(usersFile, store);
   setSession(res, userId);
   res.json({ ok: true, userId, username });
@@ -314,33 +251,66 @@ app.post('/api/auth/register', (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body || {};
-  if (!username || typeof username !== 'string') return res.status(400).json({ error: 'usuário é obrigatório' });
-  if (!password || typeof password !== 'string') return res.status(400).json({ error: 'password é obrigatório' });
   const store = readJson(usersFile, { users: [] });
-  const user = (store.users || []).find((u) => (u.username || u.email || '').toLowerCase() === username.toLowerCase());
-  if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
-  const ok = bcrypt.compareSync(password, user.passwordHash);
-  if (!ok) return res.status(401).json({ error: 'Credenciais inválidas' });
+  const user = store.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  if (!user || !bcrypt.compareSync(password, user.passwordHash)) return res.status(401).json({ error: 'Credenciais inválidas' });
   setSession(res, user.userId);
-  res.json({ ok: true, userId: user.userId, username: user.username || user.email });
-});
-
-app.post('/api/auth/logout', (req, res) => {
-  clearSession(req, res);
-  res.json({ ok: true });
+  res.json({ ok: true, userId: user.userId, username: user.username });
 });
 
 app.get('/api/auth/me', (req, res) => {
   const sid = req.cookies?.[SESSION_COOKIE];
-  if (!sid) return res.status(401).json({ error: 'Não autenticado' });
-  const s = getSession(sid);
-  if (!s) return res.status(401).json({ error: 'Sessão inválida' });
+  const s = sid ? getSession(sid) : null;
+  if (!s) return res.status(401).json({ error: 'Não autenticado' });
   const store = readJson(usersFile, { users: [] });
-  const user = (store.users || []).find((u) => u.userId === s.userId);
-  if (!user) return res.status(401).json({ error: 'Sessão inválida' });
-  res.json({ ok: true, userId: user.userId, username: user.username || user.email });
+  const user = store.users.find(u => u.userId === s.userId);
+  if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
+  res.json({ ok: true, userId: user.userId, username: user.username });
 });
-// Rotas HTML dinâmicas (para funcionar com /call/:id, /host/:id, etc.)
+
+// API Calls
+app.post('/api/create-call', requireAuth, (req, res) => {
+  const { videoUrl, callerName, callerAvatarUrl, title, expectedAmount } = req.body;
+  if (!videoUrl) return res.status(400).json({ error: 'videoUrl é obrigatório' });
+  const callId = uuidv4();
+  const amt = parseCurrencyToNumber(expectedAmount);
+  calls.set(callId, {
+    title: title || null,
+    videoUrl,
+    callerName: callerName || null,
+    callerAvatarUrl: callerAvatarUrl || null,
+    expiresAt: null,
+    expectedAmount: amt,
+    ownerUserId: req.userId,
+    hostId: null,
+    guests: new Set(),
+    createdAt: new Date()
+  });
+  persistCalls();
+  appendEvent({ id: uuidv4(), type: 'call_created', callId, at: new Date().toISOString(), userId: req.userId });
+  if (amt) addSale({ callId, amount: amt, note: 'Venda registrada na criação', userId: req.userId });
+  res.json({ callId, ringUrl: `/ring/${callId}` });
+});
+
+app.get('/api/calls', requireAuth, (req, res) => {
+  const list = serializeCalls().filter(c => c.ownerUserId === req.userId);
+  res.json({ calls: list });
+});
+
+app.get('/api/call/:callId', (req, res) => {
+  const call = calls.get(req.params.callId);
+  if (!call) return res.status(404).json({ error: 'Call não encontrada' });
+  if (isExpired(call)) return res.status(410).json({ error: 'Expirada' });
+  res.json({ ...call, guestsCount: call.guests.size });
+});
+
+// --- ROTAS DE PÁGINAS HTML (Express) ---
+app.get('/video/:callId', (req, res) => {
+  const p = path.join(__dirname, 'public', 'video.html');
+  if (fs.existsSync(p)) res.sendFile(p);
+  else res.status(404).send('Página não encontrada');
+});
+
 app.get('/call/:callId', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'call.html'));
 });
@@ -349,426 +319,44 @@ app.get('/host/:callId', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'host.html'));
 });
 
-// Simulador: "chamada" com vídeo (sem WebRTC)
-app.get('/video/:callId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'video.html'));
-});
-
-// Rota para criar uma nova call
-app.post('/api/create-call', requireAuth, (req, res) => {
-  const { videoUrl, callerName, callerAvatarUrl, title, expiresInMinutes, expectedAmount } = req.body;
-  
-  if (!videoUrl) {
-    return res.status(400).json({ error: 'videoUrl é obrigatório' });
-  }
-
-  let expectedAmountNum = null;
-  if (expectedAmount !== undefined && expectedAmount !== null && expectedAmount !== '') {
-    const n = parseCurrencyToNumber(expectedAmount);
-    if (!Number.isFinite(n) || n <= 0) return res.status(400).json({ error: 'expectedAmount deve ser número > 0' });
-    // arredonda 2 casas
-    expectedAmountNum = Math.round(n * 100) / 100;
-  }
-
-  let expiresAt = null;
-  if (expiresInMinutes !== undefined && expiresInMinutes !== null && expiresInMinutes !== '') {
-    const mins = Number(expiresInMinutes);
-    if (!Number.isFinite(mins) || mins <= 0) {
-      return res.status(400).json({ error: 'expiresInMinutes deve ser um número > 0' });
-    }
-    expiresAt = new Date(Date.now() + mins * 60 * 1000);
-  }
-
-  const callId = uuidv4();
-  calls.set(callId, {
-    title: typeof title === 'string' ? title : null,
-    videoUrl,
-    callerName: typeof callerName === 'string' ? callerName : null,
-    callerAvatarUrl: typeof callerAvatarUrl === 'string' ? callerAvatarUrl : null,
-    expiresAt,
-    expectedAmount: expectedAmountNum,
-    ownerUserId: req.userId || null,
-    hostId: null,
-    guests: new Set(),
-    createdAt: new Date()
-  });
-  persistCalls();
-
-  appendEvent({
-    id: uuidv4(),
-    type: 'call_created',
-    callId,
-    at: new Date().toISOString(),
-    userId: req.userId || null
-  });
-
-  // Se informou valor, registra venda automaticamente na criação do link
-  let sale = null;
-  if (expectedAmountNum && expectedAmountNum > 0) {
-    sale = addSale({
-      callId,
-      amount: expectedAmountNum,
-      note: 'Venda registrada na criação do link',
-      userId: req.userId || null
-    });
-  }
-
-  res.json({ 
-    callId, 
-    url: `/call/${callId}`,
-    hostUrl: `/host/${callId}`,
-    ringUrl: `/ring/${callId}`,
-    videoUrlPage: `/video/${callId}`,
-    sale
-  });
-});
-
-// Rota para upload de vídeo
-app.post('/api/upload-video', requireAuth, upload.single('video'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-  }
-
-  const videoUrl = `/uploads/${req.file.filename}`;
-  res.json({ videoUrl, filename: req.file.filename });
-});
-
-// Rota para upload de avatar
-app.post('/api/upload-avatar', requireAuth, uploadAvatar.single('avatar'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-  }
-
-  const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-  res.json({ avatarUrl, filename: req.file.filename });
-});
-
-// Rota para obter informações da call
-app.get('/api/call/:callId', (req, res) => {
-  const { callId } = req.params;
-  const call = calls.get(callId);
-
-  if (!call) {
-    return res.status(404).json({ error: 'Call não encontrada' });
-  }
-
-  if (isExpired(call)) {
-    return res.status(410).json({ error: 'Link expirado' });
-  }
-
-  // Log básico: quando o lead consulta a call (sem sessão)
-  const sid = req.cookies?.[SESSION_COOKIE];
-  const isAuthed = sid ? !!getSession(sid) : false;
-  if (!isAuthed) {
-    appendEvent({ id: uuidv4(), type: 'ring_open', callId, at: new Date().toISOString() });
-  }
-
-  res.json({
-    callId,
-    title: call.title || null,
-    videoUrl: call.videoUrl,
-    callerName: call.callerName,
-    callerAvatarUrl: call.callerAvatarUrl,
-    expiresAt: call.expiresAt ? new Date(call.expiresAt).toISOString() : null,
-    hasHost: !!call.hostId,
-    guestsCount: call.guests.size
-  });
-});
-
-// Lista calls persistidas (para dashboard multi-dispositivo)
-app.get('/api/calls', requireAuth, (req, res) => {
-  const list = serializeCalls()
-    .filter((c) => !c.ownerUserId || c.ownerUserId === req.userId)
-    .map((c) => ({
-    ...c,
-    expired: c.expiresAt ? Date.now() > new Date(c.expiresAt).getTime() : false
-  }));
-  res.json({ calls: list });
-});
-
-// Renomeia call
-app.patch('/api/call/:callId', requireAuth, (req, res) => {
-  const { callId } = req.params;
-  const call = calls.get(callId);
-  if (!call) return res.status(404).json({ error: 'Call não encontrada' });
-  if (call.ownerUserId && call.ownerUserId !== req.userId) return res.status(403).json({ error: 'Sem permissão' });
-
-  const { title, expiresInMinutes, expireNow, clearExpiry } = req.body || {};
-  if (title !== undefined && title !== null && typeof title !== 'string') {
-    return res.status(400).json({ error: 'title deve ser string' });
-  }
-
-  call.title = (typeof title === 'string' && title.trim()) ? title.trim() : null;
-
-  if (expireNow === true) {
-    call.expiresAt = new Date(Date.now() - 1000);
-  } else if (clearExpiry === true) {
-    call.expiresAt = null;
-  } else if (expiresInMinutes !== undefined && expiresInMinutes !== null && expiresInMinutes !== '') {
-    const mins = Number(expiresInMinutes);
-    if (!Number.isFinite(mins) || mins <= 0) {
-      return res.status(400).json({ error: 'expiresInMinutes deve ser um número > 0' });
-    }
-    call.expiresAt = new Date(Date.now() + mins * 60 * 1000);
-  }
-
-  calls.set(callId, call);
-  persistCalls();
-  res.json({ ok: true, callId, title: call.title, expiresAt: call.expiresAt ? new Date(call.expiresAt).toISOString() : null });
-});
-
-// Apagar call (remove também vendas/eventos relacionados)
-app.delete('/api/call/:callId', requireAuth, (req, res) => {
-  const { callId } = req.params;
-  const call = calls.get(callId);
-  if (!call) return res.status(404).json({ error: 'Call não encontrada' });
-  if (call.ownerUserId && call.ownerUserId !== req.userId) return res.status(403).json({ error: 'Sem permissão' });
-
-  calls.delete(callId);
-  persistCalls();
-
-  // remove vendas relacionadas
-  const salesStore = readJson(salesFile, { sales: [] });
-  salesStore.sales = (Array.isArray(salesStore.sales) ? salesStore.sales : []).filter((s) => s.callId !== callId);
-  writeJson(salesFile, salesStore);
-
-  // remove eventos relacionados
-  const evtStore = readJson(eventsFile, { events: [] });
-  evtStore.events = (Array.isArray(evtStore.events) ? evtStore.events : []).filter((e) => e.callId !== callId);
-  writeJson(eventsFile, evtStore);
-
-  appendEvent({ id: uuidv4(), type: 'call_deleted', callId, at: new Date().toISOString(), userId: req.userId || null });
-  res.json({ ok: true });
-});
-
-// Track público (lead) para eventos específicos
-app.post('/api/track', (req, res) => {
-  const { callId, type } = req.body || {};
-  if (typeof callId !== 'string' || !calls.get(callId)) return res.status(400).json({ error: 'callId inválido' });
-  const allowed = new Set(['call_answer', 'video_open', 'call_end']);
-  if (typeof type !== 'string' || !allowed.has(type)) return res.status(400).json({ error: 'type inválido' });
-  appendEvent({ id: uuidv4(), type, callId, at: new Date().toISOString() });
-  res.json({ ok: true });
-});
-
-// Histórico (privado)
+// API History/Sales
 app.get('/api/history', requireAuth, (req, res) => {
-  const events = listEvents(8000);
-  // filtra por owner quando possível
-  const mine = events.filter((e) => {
+  const events = listEvents(8000).filter(e => {
     const c = calls.get(e.callId);
-    return !c?.ownerUserId || c.ownerUserId === req.userId;
+    return !c || c.ownerUserId === req.userId;
   });
-  res.json({ events: mine });
+  res.json({ events });
 });
 
-// Vendas (privado)
 app.get('/api/sales', requireAuth, (req, res) => {
-  const sales = listSales().filter((s) => {
+  const sales = listSales().filter(s => {
     const c = calls.get(s.callId);
-    return !c?.ownerUserId || c.ownerUserId === req.userId;
+    return !c || c.ownerUserId === req.userId;
   });
   res.json({ sales });
 });
 
-app.post('/api/sales', requireAuth, (req, res) => {
-  const { callId, amount, note } = req.body || {};
-  if (typeof callId !== 'string' || !calls.get(callId)) return res.status(400).json({ error: 'callId inválido' });
-  const c = calls.get(callId);
-  if (c?.ownerUserId && c.ownerUserId !== req.userId) return res.status(403).json({ error: 'Sem permissão' });
-  const amt = parseCurrencyToNumber(amount);
-  if (!Number.isFinite(amt) || amt <= 0) return res.status(400).json({ error: 'amount deve ser número > 0' });
-  const item = addSale({ callId, amount: Math.round(amt * 100) / 100, note: typeof note === 'string' ? note : null, userId: req.userId || null });
-  res.json({ ok: true, sale: item });
+app.post('/api/track', (req, res) => {
+  const { callId, type } = req.body;
+  if (!calls.has(callId)) return res.status(400).json({ error: 'Inválido' });
+  appendEvent({ id: uuidv4(), type, callId, at: new Date().toISOString() });
+  res.json({ ok: true });
 });
 
-// Next.js (dashboard moderna / ring UI)
+// Next.js Integration
 const dev = process.env.NODE_ENV !== 'production';
 const nextApp = next({ dev, dir: __dirname });
 const nextHandler = nextApp.getRequestHandler();
 
-// WebSocket signaling
-wss.on('connection', (ws, req) => {
-  let clientId = null;
-  let callId = null;
-  let role = null; // 'host' ou 'guest'
-
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message);
-
-      switch (data.type) {
-        case 'join':
-          callId = data.callId;
-          role = data.role;
-          clientId = data.clientId || uuidv4();
-          
-          // Armazena informações no WebSocket para uso nas funções de broadcast
-          ws.callId = callId;
-          ws.role = role;
-          ws.clientId = clientId;
-
-          const call = calls.get(callId);
-          if (!call) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Call não encontrada' }));
-            return;
-          }
-
-          if (role === 'host') {
-            call.hostId = clientId;
-            // Notifica todos os guests que o host entrou
-            broadcastToGuests(callId, { type: 'host-joined' });
-          } else if (role === 'guest') {
-            call.guests.add(clientId);
-            // Notifica o host que um guest entrou
-            broadcastToHost(callId, { type: 'guest-joined', guestId: clientId });
-          }
-
-          ws.send(JSON.stringify({ 
-            type: 'joined', 
-            clientId, 
-            callId,
-            videoUrl: call.videoUrl 
-          }));
-          break;
-
-        case 'offer':
-          // Host envia offer para guest
-          if (role === 'host') {
-            broadcastToGuest(callId, data.targetGuestId, {
-              type: 'offer',
-              offer: data.offer,
-              hostId: clientId
-            });
-          }
-          break;
-
-        case 'answer':
-          // Guest responde com answer
-          if (role === 'guest') {
-            broadcastToHost(callId, {
-              type: 'answer',
-              answer: data.answer,
-              guestId: clientId
-            });
-          }
-          break;
-
-        case 'ice-candidate':
-          // Envia ICE candidate
-          if (role === 'host') {
-            broadcastToGuest(callId, data.targetGuestId, {
-              type: 'ice-candidate',
-              candidate: data.candidate
-            });
-          } else if (role === 'guest') {
-            broadcastToHost(callId, {
-              type: 'ice-candidate',
-              candidate: data.candidate,
-              guestId: clientId
-            });
-          }
-          break;
-
-        case 'ready':
-          // Guest está pronto para receber áudio
-          if (role === 'guest') {
-            broadcastToHost(callId, {
-              type: 'guest-ready',
-              guestId: clientId
-            });
-          }
-          break;
-
-        case 'play':
-          // Host sinaliza para iniciar vídeo
-          if (role === 'host') {
-            broadcastToGuests(callId, {
-              type: 'play',
-              timestamp: Date.now()
-            });
-          }
-          break;
-      }
-    } catch (error) {
-      console.error('Erro ao processar mensagem:', error);
-      ws.send(JSON.stringify({ type: 'error', message: error.message }));
-    }
-  });
-
-  ws.on('close', () => {
-    if (callId && role) {
-      const call = calls.get(callId);
-      if (call) {
-        if (role === 'host') {
-          call.hostId = null;
-          broadcastToGuests(callId, { type: 'host-left' });
-        } else if (role === 'guest') {
-          call.guests.delete(clientId);
-          broadcastToHost(callId, { type: 'guest-left', guestId: clientId });
-        }
-      }
-    }
-  });
-});
-
-// Funções auxiliares para broadcast
-function broadcastToHost(callId, message) {
-  const call = calls.get(callId);
-  if (!call || !call.hostId) return;
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN && 
-        client.callId === callId && 
-        client.role === 'host' &&
-        client.clientId === call.hostId) {
-      client.send(JSON.stringify(message));
-    }
-  });
-}
-
-function broadcastToGuest(callId, guestId, message) {
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN && 
-        client.callId === callId && 
-        client.role === 'guest' &&
-        client.clientId === guestId) {
-      client.send(JSON.stringify(message));
-    }
-  });
-}
-
-function broadcastToGuests(callId, message) {
-  const call = calls.get(callId);
-  if (!call) return;
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN && 
-        client.callId === callId && 
-        client.role === 'guest' &&
-        call.guests.has(client.clientId)) {
-      client.send(JSON.stringify(message));
-    }
-  });
-}
+app.all('*', (req, res) => nextHandler(req, res));
 
 const PORT = process.env.PORT || 8080;
-
 async function start() {
   loadCallsFromDisk();
   await nextApp.prepare();
-
-  // Deixa o Next responder tudo que não for /api, /uploads, /call/:id, /host/:id, /video/:id
-  app.all('*', (req, res) => nextHandler(req, res));
-
-  server.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-    console.log(`📹 Crie uma call: POST http://localhost:${PORT}/api/create-call`);
-  });
+  server.listen(PORT, () => console.log(`🚀 Rodando na porta ${PORT}`));
 }
-
-start().catch((e) => {
-  console.error('Falha ao iniciar servidor:', e);
+start().catch(e => {
+  console.error(e);
   process.exit(1);
 });
-
