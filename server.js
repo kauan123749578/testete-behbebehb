@@ -238,8 +238,16 @@ function setSession(res, userId) {
 
 // --- API AUTH ---
 app.post('/api/auth/register', (req, res) => {
-  const { username, password } = req.body || {};
+  const { username, password, inviteCode } = req.body || {};
+  
+  // CHAVE MESTRA: Altere 'SuaChaveSecretaAqui' para o código que você quiser
+  const MASTER_INVITE_CODE = 'VIP2024'; 
+
   if (!username || !password) return res.status(400).json({ error: 'usuário e senha obrigatórios' });
+  
+  if (inviteCode !== MASTER_INVITE_CODE) {
+    return res.status(403).json({ error: 'Código de convite inválido. Acesso restrito.' });
+  }
   
   const store = readJson(usersFile, { users: [] });
   const exists = (store.users || []).some(u => u && (u.username || u.email || '').toLowerCase() === String(username).toLowerCase());
@@ -402,7 +410,44 @@ app.get('/host/:callId', (req, res) => {
 });
 
 app.use(express.static('public', { index: false }));
-app.use('/uploads', express.static('public/uploads'));
+
+// Rota Otimizada para Streaming de Vídeos Longos
+app.get('/uploads/:filename', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'uploads', req.params.filename);
+  
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Vídeo não encontrado');
+  }
+
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  if (range) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunksize = (end - start) + 1;
+    const file = fs.createReadStream(filePath, { start, end });
+    const head = {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunksize,
+      'Content-Type': 'video/mp4',
+    };
+    res.writeHead(206, head);
+    file.pipe(res);
+  } else {
+    const head = {
+      'Content-Length': fileSize,
+      'Content-Type': 'video/mp4',
+    };
+    res.writeHead(200, head);
+    fs.createReadStream(filePath).pipe(res);
+  }
+});
+
+app.use('/uploads/avatars', express.static('public/uploads/avatars'));
 
 // --- NEXT.JS INTEGRATION ---
 const dev = process.env.NODE_ENV !== 'production';
