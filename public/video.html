@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chamada</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #000;
@@ -26,8 +32,18 @@
     video#mainVideo {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
+      /* Ajustado para cobrir a tela toda sem faixas pretas */
       background: #000;
+    }
+
+    /* Esconde qualquer barra de controle que o navegador tente forçar */
+    video::-webkit-media-controls {
+      display: none !important;
+    }
+
+    video::-webkit-media-controls-enclosure {
+      display: none !important;
     }
 
     .topbar {
@@ -44,7 +60,7 @@
 
     .pill {
       pointer-events: auto;
-      background: rgba(0,0,0,0.2);
+      background: rgba(0, 0, 0, 0.2);
       padding: 6px 16px;
       border-radius: 999px;
       display: flex;
@@ -98,14 +114,17 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       color: #fff;
       transition: all .2s ease;
       position: relative;
       border: none;
     }
-    .btn:active { transform: scale(0.9); }
-    
+
+    .btn:active {
+      transform: scale(0.9);
+    }
+
     .btn svg {
       width: 20px;
       height: 20px;
@@ -116,6 +135,7 @@
       background: #ff3b30;
       border: none;
     }
+
     .btn-danger:hover {
       background: #e6352b;
     }
@@ -134,19 +154,19 @@
       inset: 0;
       display: grid;
       place-items: center;
-      background: radial-gradient(900px 600px at 50% 30%, rgba(40,60,140,0.25), rgba(0,0,0,0.78));
+      background: radial-gradient(900px 600px at 50% 30%, rgba(40, 60, 140, 0.25), rgba(0, 0, 0, 0.78));
       z-index: 30;
     }
 
     .overlay-card {
       width: min(420px, 92vw);
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 18px;
       padding: 22px;
       text-align: center;
       backdrop-filter: blur(12px);
-      box-shadow: 0 24px 70px rgba(0,0,0,0.45);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
     }
 
     .overlay-title {
@@ -157,7 +177,7 @@
 
     .overlay-sub {
       font-size: 13px;
-      color: rgba(255,255,255,0.75);
+      color: rgba(255, 255, 255, 0.75);
       margin-bottom: 16px;
       line-height: 1.35;
     }
@@ -170,21 +190,25 @@
       height: 180px;
       border-radius: 14px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06);
       backdrop-filter: blur(10px);
       display: none;
       z-index: 25;
     }
+
     .small video {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    .hidden { display: none; }
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
+
 <body>
   <div class="stage">
     <div class="topbar">
@@ -194,7 +218,7 @@
       </div>
     </div>
 
-    <video id="mainVideo" playsinline controls></video>
+    <video id="mainVideo" playsinline oncontextmenu="return false;"></video>
 
     <div class="small" id="selfPreviewWrap">
       <video id="selfPreview" playsinline autoplay muted></video>
@@ -203,14 +227,16 @@
     <div class="controls">
       <button class="btn" id="cameraBtn" title="Câmera">
         <svg viewBox="0 0 24 24" id="cameraIcon">
-          <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+          <path
+            d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
         </svg>
         <span class="btn-label">Vídeo</span>
       </button>
-      
+
       <button class="btn btn-danger" id="hangupBtn" title="Encerrar">
         <svg viewBox="0 0 24 24">
-          <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+          <path
+            d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z" />
         </svg>
         <span class="btn-label">Sair</span>
       </button>
@@ -237,6 +263,5 @@
 
   <script src="/video.js"></script>
 </body>
+
 </html>
-
-

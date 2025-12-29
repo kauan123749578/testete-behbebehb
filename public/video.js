@@ -61,9 +61,16 @@
 
     hangupBtn.addEventListener('click', () => {
       if (timerInterval) clearInterval(timerInterval);
+      
+      // Esconde o vídeo e os controles para não sobrar rastro
+      mainVideo.style.display = 'none';
+      document.querySelector('.controls').style.display = 'none';
+      document.querySelector('.topbar').style.display = 'none';
+      document.getElementById('selfPreviewWrap').style.display = 'none';
+
       try {
         mainVideo.pause();
-        mainVideo.removeAttribute('src');
+        mainVideo.src = "";
         mainVideo.load();
       } catch {}
 
