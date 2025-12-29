@@ -409,9 +409,7 @@ app.get('/host/:callId', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'host.html'));
 });
 
-app.use(express.static('public', { index: false }));
-
-// Rota Otimizada para Streaming de Vídeos Longos
+// Rota Otimizada para Streaming de Vídeos Longos (DEVE VIR ANTES DO STATIC)
 app.get('/uploads/:filename', (req, res) => {
   const filePath = path.join(__dirname, 'public', 'uploads', req.params.filename);
   
@@ -447,6 +445,7 @@ app.get('/uploads/:filename', (req, res) => {
   }
 });
 
+app.use(express.static('public', { index: false }));
 app.use('/uploads/avatars', express.static('public/uploads/avatars'));
 
 // --- NEXT.JS INTEGRATION ---
